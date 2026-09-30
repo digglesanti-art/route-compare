@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Every navigator. One best route.</title>
+<meta name="description" content="Type any trip on earth. The app asks every free routing engine at once, ranks the answers, and names the route worth taking.">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<main class="card">
+  <header>
+    <h1>Every navigator.<br>One best route.</h1>
+    <p class="fact">Worldwide</p>
+    <p class="intro">Type any trip on earth. The app asks every free routing engine at once, ranks the answers, and names the route worth taking.</p>
+    <img class="hero" src="hero.png" alt="Several route lines crossing a street grid, the best in teal">
+    <p class="caption">Routes computed on OpenStreetMap data - global coverage.</p>
+  </header>
+
+  <section>
+    <h2>Plan a route</h2>
+    <div class="placefield">
+      <label for="from">From</label>
+      <input id="from" type="text" autocomplete="off" placeholder="Start point">
+      <ul class="suggest" id="from-suggest" hidden></ul>
+    </div>
+    <div class="btnrow">
+      <button id="locate" class="btn secondary" type="button">Use my location</button>
+    </div>
+    <div class="placefield">
+      <label for="to">To (any place on earth)</label>
+      <input id="to" type="text" autocomplete="off" placeholder="Destination">
+      <ul class="suggest" id="to-suggest" hidden></ul>
+    </div>
+    <div class="btnrow">
+      <button id="compare" class="btn primary" type="button">Compare routes</button>
+    </div>
+    <p class="caption">Live engines: OSRM, Valhalla, BRouter. Free, no signup, all driving.</p>
+    <div id="error" class="callout" hidden></div>
+  </section>
+
+  <section id="results" hidden>
+    <h2 id="results-title"></h2>
+    <p class="keysentence" id="recommendation"></p>
+    <div class="sortrow" role="group" aria-label="Sort by">
+      <span class="sortlabel">Sort by</span>
+      <button class="chip" data-sort="quickest" type="button">Quickest</button>
+      <button class="chip" data-sort="easiest" type="button">Easiest</button>
+      <button class="chip" data-sort="shortest" type="button">Shortest</button>
+    </div>
+    <ol class="rows" id="rows"></ol>
+    <p class="caption">Recommended: quickest, unless another route is within two minutes with fewer turns and less distance. Turn counts come from each engine; BRouter reports none.</p>
+    <div id="failures" class="note" hidden></div>
+
+    <h3>The routes</h3>
+    <div class="routemap" id="routemap"></div>
+    <p class="caption">Route shapes as each engine draws them, recommended in teal. Schematic view, no base map.</p>
+
+    <h3>Waze and Apple keep theirs closed</h3>
+    <p>Waze and Apple Maps do not share routes with any app - so these open their apps with your trip already typed in. Comparing them is one tap.</p>
+    <div class="btnrow">
+      <a id="dl-waze" class="btn secondary" href="#" target="_blank" rel="noopener">Open in Waze</a>
+      <a id="dl-apple" class="btn secondary" href="#" target="_blank" rel="noopener">Open in Apple Maps</a>
+      <a id="dl-google" class="btn secondary" href="#" target="_blank" rel="noopener">Open in Google Maps</a>
+    </div>
+
+    <h3>While you drive</h3>
+    <div id="drive-intro">
+      <p>Keep the app watching mid-drive: it rechecks every engine from your GPS position every 2 minutes, and if a clearly better route appears (3+ minutes) it tells you - on screen, and out loud if you want. Switching navigation app is one tap.</p>
+      <div class="btnrow"><button id="drive-start" class="btn secondary" type="button">Start drive mode</button></div>
+    </div>
+    <div id="drive" hidden>
+      <div id="drive-alert" class="callout" hidden></div>
+      <ol class="rows" id="drive-rows"></ol>
+      <p class="caption" id="drive-status"></p>
+      <div class="sortrow" role="group" aria-label="Alerts">
+        <span class="sortlabel">Alerts</span>
+        <button class="chip" id="al-voice" type="button">Text + voice</button>
+        <button class="chip" id="al-text" type="button">Text only</button>
+      </div>
+      <p class="caption">Phones pause web pages that are not on screen. Keep this page open while you drive - if you leave it, the watching pauses until you come back.</p>
+      <div class="btnrow"><button id="drive-end" class="btn secondary" type="button">End drive mode</button></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>More engines on the way</h2>
+    <p>Google, HERE, TomTom, OpenRouteService and GraphHopper each plug in with one API key - the app is built so adding an engine changes nothing else. Small regional services (Gaode in China, Kakao in Korea, Yandex, Mapy.cz and more) slot in the same way. They get switched on one by one.</p>
+  </section>
+
+  <footer>
+    <p class="caption">Engines checked live 30 Sep 2026. Free demo servers can rate-limit under heavy use. Nothing is booked, bought, or shared from this page.</p>
+  </footer>
+</main>
+<script src="app.js"></script>
+</body>
+</html>
