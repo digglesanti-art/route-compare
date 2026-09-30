@@ -41,6 +41,16 @@ async function geocode(q) {
   return { lat: +rows[0].lat, lon: +rows[0].lon, label: q };
 }
 
+
+async function snapToRoad(p) {
+  try {
+    const j = await withTimeout(getJson(`https://router.project-osrm.org/nearest/v1/driving/${p.lon},${p.lat}?number=1`), 8000, 'snap');
+    const w = j.waypoints && j.waypoints[0];
+    if (w && w.location) return { lat: w.location[1], lon: w.location[0], label: p.label };
+  } catch { /* keep raw point */ }
+  return p;
+}
+
 async function suggest(q) {
   const r = await fetch(`${GEOCODER}/search?q=${encodeURIComponent(q)}&format=json&limit=5`);
   if (!r.ok) return [];
@@ -66,7 +76,7 @@ const PROVIDERS = [
   {
     id: 'valhalla', name: 'Valhalla',
     run: async (o, d) => {
-      const req = { locations: [{ lat: o.lat, lon: o.lon }, { lat: d.lat, lon: d.lon }], costing: 'auto', units: 'kilometers' };
+      const req = { locations: [{ lat: o.lat, lon: o.lon, radius: 3000 }, { lat: d.lat, lon: d.lon, radius: 3000 }], costing: 'auto', units: 'kilometers' };
       const j = await getJson(`https://valhalla1.openstreetmap.de/route?json=${encodeURIComponent(JSON.stringify(req))}`);
       if (!j.trip) throw new Error('no route');
       const coords = (j.trip.legs || []).flatMap(leg => decodePolyline(leg.shape, 6));
@@ -146,6 +156,9 @@ function setupAutocomplete(input, list, onText, onPick) {
   document.addEventListener('pointerdown', e => {
     if (!list.hidden && !e.target.closest('.placefield')) { list.hidden = true; }
   });
+  input.addEventListener('keydown', e => {
+    if (e.key === 'Escape') { list.hidden = true; input.blur(); }
+  });
 }
 
 function setError(msg) {
@@ -222,7 +235,7 @@ async function compare() {
   $('compare').textContent = 'Asking every engine…';
   try {
     if (!state.toText.trim()) throw new Error('Type a destination first.');
-    const dest = state.toPlace || await withTimeout(geocode(state.toText.trim()), 12000, 'Address lookup');
+    let dest = state.toPlace || await withTimeout(geocode(state.toText.trim()), 12000, 'Address lookup');
     let origin;
     if (state.gps && (state.fromText === 'My location (GPS)' || state.fromText === state.gps.label)) origin = state.gps;
     else if (state.fromPlace) origin = state.fromPlace;
@@ -230,6 +243,7 @@ async function compare() {
       if (!state.fromText.trim()) throw new Error('Type a start point, or tap "Use my location".');
       origin = await withTimeout(geocode(state.fromText.trim()), 12000, 'Address lookup');
     }
+    [origin, dest] = await Promise.all([snapToRoad(origin), snapToRoad(dest)]);
     const settled = await Promise.allSettled(PROVIDERS.map(p => withTimeout(p.run(origin, dest), 15000, p.name)));
     const routes = [], failures = [];
     settled.forEach((s, i) => {
@@ -347,7 +361,8 @@ async function driveCheck() {
   if (!pos) { dr.gpsState = 'waiting for GPS'; renderDrive(); return; }
   dr.gpsState = 'live';
   renderDrive();
-  const settled = await Promise.allSettled(PROVIDERS.map(p => withTimeout(p.run(pos, dr.dest), 15000, p.name)));
+  const [spos, sdest] = await Promise.all([snapToRoad(pos), snapToRoad(dr.dest)]);
+  const settled = await Promise.allSettled(PROVIDERS.map(p => withTimeout(p.run(spos, sdest), 15000, p.name)));
   if (!state.drive) return;
   const fresh = [];
   settled.forEach(s => { if (s.status === 'fulfilled') fresh.push({ ...s.value, rank: 0, recommended: false }); });
